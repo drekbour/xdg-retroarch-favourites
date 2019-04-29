@@ -40,22 +40,39 @@ def read_cfg(path):
 def read_lpl(path):
     """Retroarch has two LPL formats..."""
     print("Reading "+path)
-    content = _user_file(path).read()
-    if content.startswith('{'):
-        return json.loads(content)
-    else:
-        return None
+    with _user_file(path) as lpl:
+        if lpl.readline().startswith('{'):
+            lpl.seek(0)
+            return json.load(lpl)['items']
+        else:
+            lpl.seek(0)
+            return list(convert_old_lpl_format(lpl))
+
+
+def convert_old_lpl_format(fd):
+    while True:
+        entry = {
+            'path': fd.readline().strip(),
+            'label': fd.readline().strip(),
+            'core_path': fd.readline().strip(),
+            'core_name': fd.readline().strip(),
+            'crc32': fd.readline().strip(),
+            'db_name': fd.readline().strip()
+        }
+        if entry['path']:
+            yield entry
+        else:
+            return
 
 
 def find_game(game_path):
     """Locate game in playlists (where it has additional labels we want)"""
     for lpl in _find_files(cfg['playlist_directory'], '.lpl'):
         playlist = read_lpl(lpl.path)
-        if playlist:
-            try:
-                return next(_pruned(game) for game in playlist['items'] if game['path'] == game_path)
-            except StopIteration:
-                pass
+        try:
+            return next(_pruned(game) for game in playlist if game['path'] == game_path)
+        except StopIteration:
+            pass
 
 
 def desktop_entry_for(game):
@@ -111,9 +128,9 @@ def sync_with_filesystem(retroarch_view):
 if __name__ == "__main__":
     # Read configs
     cfg = read_cfg('~/.config/retroarch/retroarch.cfg')
-    favs = read_lpl(cfg['content_favorites_path'])
+    faves = read_lpl(cfg['content_favorites_path'])
 
     # Retroarch view of expected entries {filename: content}
-    retroarch_view = {k: v for k, v in (desktop_entry_for(_pruned(fave)) for fave in favs['items'])}
+    retroarch_view = {k: v for k, v in (desktop_entry_for(_pruned(fave)) for fave in faves)}
 
     sync_with_filesystem(retroarch_view)
