@@ -1,0 +1,7 @@
+[Unit]
+Description=Sync Retroarch favourites directly into the desktop menu system
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/xdg-retroarch-favourites
+

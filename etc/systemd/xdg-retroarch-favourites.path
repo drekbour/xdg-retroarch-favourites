@@ -1,0 +1,8 @@
+[Unit]
+Description=(Trigger for) Sync Retroarch favourites directly into the desktop menu system
+
+[Path]
+PathChanged=%h/.config/retroarch/content_favorites.lpl
+
+[Install]
+WantedBy=paths.target
