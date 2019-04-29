@@ -1,0 +1,5 @@
+#!/bin/sh
+
+while inotifywait -qq --event close_write ~/.config/retroarch/content_favorites.lpl; do
+  ~/.local/bin/xdg-retroarch-favourites
+done
